@@ -1,0 +1,30 @@
+# Estructura base del proyecto
+terraform {
+  backend "gcs" {
+    bucket = "terraform-state-company"
+    prefix = "prod"
+  }
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "google" {
+  project = var.project_id
+  region  = var.region
+}
+
+# Variables globales
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "region" {
+  description = "Default region"
+  type        = string
+  default     = "us-central1"
+}
