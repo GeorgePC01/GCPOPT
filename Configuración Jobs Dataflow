@@ -1,0 +1,49 @@
+# 1. Job de Pre-procesamiento
+resource "google_dataflow_job" "preprocessing" {
+  name              = "data-preprocessing"
+  template_gcs_path = "gs://dataflow-templates/latest/Stream_GCS_Text_to_BigQuery"
+  
+  parameters = {
+    javascriptTextTransformGcsPath = "${google_storage_bucket.config_bucket.url}/transforms/preprocess.js"
+    javascriptTextTransformFunctionName = "transform"
+    outputDeadletterTable = "${var.project_id}:error_dataset.preprocessing_errors"
+    inputFilePattern = "gs://${google_storage_bucket.raw_bucket.name}/input/*.json"
+    outputTableSpec = "${var.project_id}:staging_dataset.preprocessed_data"
+  }
+
+  machine_type = "n1-standard-4"
+  max_workers  = 5
+  zone         = "us-central1-a"
+}
+
+# 2. Job de Transformación Principal
+resource "google_dataflow_job" "main_transformation" {
+  name              = "data-transformation"
+  template_gcs_path = "gs://dataflow-templates/latest/Bulk_Compress_GCS"
+  
+  parameters = {
+    inputTableSpec  = "${var.project_id}:staging_dataset.preprocessed_data"
+    outputTableSpec = "${var.project_id}:processed_dataset.transformed_data"
+    transformQuery  = file("${path.module}/sql/transform.sql")
+  }
+
+  machine_type = "n1-standard-8"
+  max_workers  = 8
+  zone         = "us-central1-a"
+}
+
+# 3. Job de Validación y Control de Calidad
+resource "google_dataflow_job" "data_validation" {
+  name              = "data-validation"
+  template_gcs_path = "gs://dataflow-templates/latest/DataStreamIO"
+  
+  parameters = {
+    inputFilePattern = "gs://${google_storage_bucket.processed_bucket.name}/validation/*.json"
+    outputTableSpec  = "${var.project_id}:quality_dataset.validation_results"
+    validationConfig = file("${path.module}/config/validation_rules.json")
+  }
+
+  machine_type = "n1-standard-4"
+  max_workers  = 3
+  zone         = "us-central1-a"
+}
