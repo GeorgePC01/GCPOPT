@@ -1,0 +1,40 @@
+# Cloud Build configuration
+steps:
+  # Test
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['test']
+    
+  # Build
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/auth-service:$COMMIT_SHA', '.']
+    
+  # Push
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/auth-service:$COMMIT_SHA']
+    
+  # Deploy to GKE
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    args:
+    - run
+    - --filename=k8s/
+    - --location=us-central1
+    - --cluster=prod-cluster
+
+# ArgoCD Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: auth-service
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/company/auth-service'
+    path: k8s
+    targetRevision: HEAD
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
