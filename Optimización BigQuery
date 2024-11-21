@@ -1,0 +1,17 @@
+-- Configuración de tabla particionada
+CREATE OR REPLACE TABLE `proyecto.dataset.eventos_optimizados`
+PARTITION BY DATE(fecha_evento)
+CLUSTER BY usuario_id, tipo_evento
+OPTIONS(
+  partition_expiration_days = 90,
+  require_partition_filter = true
+);
+
+-- Vista materializada para reportes comunes
+CREATE MATERIALIZED VIEW `proyecto.dataset.mv_reportes_diarios`
+AS SELECT
+  DATE(fecha_evento) as fecha,
+  COUNT(*) as total_eventos,
+  COUNT(DISTINCT usuario_id) as usuarios_unicos
+FROM `proyecto.dataset.eventos_optimizados`
+GROUP BY fecha;
