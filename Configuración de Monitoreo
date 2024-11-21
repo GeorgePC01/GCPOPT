@@ -1,14 +1,22 @@
 # Configuración de Monitoreo y Alertas
 monitoring:
+  # Dashboards Configuration
   dashboards:
     - name: "Cost Overview"
+      title: "Cost Management Dashboard"
       widgets:
         - title: "Daily Cost Trend"
-          metric: "billing/cost"
+          chart_type: "LINE"
+          metric: "billing/monthly_cost"
           aggregation: "MEAN"
+        - title: "Cost by Service"
+          chart_type: "PIE"
+          metric: "billing/monthly_cost"
+          group_by: "service"
         - title: "Resource Usage"
           metric: "compute/usage"
-          
+
+  # Alerts Configuration
   alerts:
     budget:
       - threshold: 80%
@@ -20,13 +28,37 @@ monitoring:
       - condition: "CPU > 80%"
         duration: "5m"
         notification_channels: ["slack"]
-      
+    
     bigquery:
       - condition: "query_cost > $100"
         notification_channels: ["email"]
 
+  # Logging Configuration
   logging:
     export:
       destination: "bigquery"
       dataset: "logs_analysis"
       retention: "90_days"
+
+  # Billing Export Configuration
+  billing_export:
+    dataset_id: "billing_data"
+    table_id: "gcp_billing_export"
+    schedule: "daily"
+    data_retention: "365"
+
+  # Notification Channels
+  notification_channels:
+    - type: "email"
+      name: "Billing Alerts"
+      email_address: "finance@company.com"
+    - type: "slack"
+      name: "Cost Monitoring"
+      webhook_url: "https://hooks.slack.com/..."
+    - type: "sms"
+      name: "Critical Alerts"
+      phone_number: "+1234567890"
+  
+  - type: "slack"
+    name: "Cost Monitoring"
+    webhook_url: "https://hooks.slack.com/..."
