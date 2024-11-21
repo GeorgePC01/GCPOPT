@@ -1,0 +1,25 @@
+# Políticas IAM por nivel
+organization_policies:
+  - role: "roles/resourcemanager.organizationAdmin"
+    members:
+      - "group:security-admins@company.com"
+  
+  - role: "roles/billing.admin"
+    members:
+      - "group:finance-admins@company.com"
+
+folder_policies:
+  production:
+    - role: "roles/compute.admin"
+      members:
+        - "group:prod-admins@company.com"
+    
+    - role: "roles/monitoring.admin"
+      members:
+        - "group:sre-team@company.com"
+
+project_policies:
+  app-prod-001:
+    - role: "roles/container.developer"
+      members:
+        - "group:devops@company.com"
