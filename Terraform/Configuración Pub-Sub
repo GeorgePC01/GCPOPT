@@ -1,0 +1,25 @@
+# Tópicos Pub/Sub
+resource "google_pubsub_topic" "jobs" {
+  name = "scheduled-jobs"
+}
+
+resource "google_pubsub_topic" "data_processing" {
+  name = "data-processing"
+}
+
+# Suscripciones
+resource "google_pubsub_subscription" "job_subscription" {
+  name  = "job-processor"
+  topic = google_pubsub_topic.jobs.name
+
+  ack_deadline_seconds = 20
+  
+  expiration_policy {
+    ttl = "86400s"  # 24 horas
+  }
+  
+  retry_policy {
+    minimum_backoff = "10s"
+    maximum_backoff = "600s"  # 10 minutos
+  }
+}
