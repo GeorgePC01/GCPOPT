@@ -1,0 +1,38 @@
+# BigQuery Datasets
+resource "google_bigquery_dataset" "operational" {
+  dataset_id                  = "operational_dataset"
+  friendly_name              = "Operational Data"
+  location                   = "US"
+  default_table_expiration_ms = 7776000000 # 90 días
+
+  labels = {
+    environment = "production"
+    data_type   = "operational"
+  }
+}
+
+resource "google_bigquery_dataset" "archive" {
+  dataset_id    = "archive_dataset"
+  friendly_name = "Archived Data"
+  location      = "US"
+
+  labels = {
+    environment = "production"
+    data_type   = "archive"
+  }
+}
+
+# Dataflow Job
+resource "google_dataflow_job" "etl_job" {
+  name              = "etl-processing"
+  template_gcs_path = "gs://dataflow-templates/latest/Cloud_PubSub_to_BigQuery"
+  temp_gcs_location = google_storage_bucket.temp_bucket.url
+  
+  parameters = {
+    inputTopic = google_pubsub_topic.input.id
+    outputTableSpec = "${google_bigquery_dataset.operational.dataset_id}.processed_data"
+  }
+
+  machine_type = "n1-standard-2"
+  max_workers  = 5
+}
