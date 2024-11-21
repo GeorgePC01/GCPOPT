@@ -1,0 +1,35 @@
+-- 1. Backup Procedure
+CREATE OR REPLACE PROCEDURE `${project_id}.backup_dataset.create_backup`()
+BEGIN
+  DECLARE table_name STRING;
+  DECLARE backup_date STRING;
+  
+  SET backup_date = FORMAT_DATE('%Y%m%d', CURRENT_DATE());
+  
+  FOR record IN (
+    SELECT table_id 
+    FROM `${project_id}.processed_dataset.__TABLES__`
+    WHERE table_id NOT LIKE 'backup_%'
+  )
+  DO
+    SET table_name = record.table_id;
+    
+    EXECUTE IMMEDIATE FORMAT("""
+      CREATE OR REPLACE TABLE `${project_id}.backup_dataset.backup_%s_%s`
+      AS SELECT * FROM `${project_id}.processed_dataset.%s`
+    """, table_name, backup_date, table_name);
+  END FOR;
+END;
+
+-- 2. Recovery Procedure
+CREATE OR REPLACE PROCEDURE `${project_id}.backup_dataset.restore_table`(
+  source_table STRING,
+  target_table STRING,
+  backup_date STRING
+)
+BEGIN
+  EXECUTE IMMEDIATE FORMAT("""
+    CREATE OR REPLACE TABLE `${project_id}.processed_dataset.%s`
+    AS SELECT * FROM `${project_id}.backup_dataset.backup_%s_%s`
+  """, target_table, source_table, backup_date);
+END;
