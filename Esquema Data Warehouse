@@ -1,0 +1,26 @@
+-- Tabla de Hechos
+CREATE OR REPLACE TABLE `proyecto.dwh.fact_ventas`
+(
+    venta_id STRING NOT NULL,
+    fecha_id INT64 NOT NULL,
+    producto_id STRING NOT NULL,
+    cliente_id STRING NOT NULL,
+    cantidad INT64,
+    monto NUMERIC,
+    costo NUMERIC,
+    margen NUMERIC
+)
+PARTITION BY DATE(_PARTITIONTIME)
+CLUSTER BY producto_id, cliente_id;
+
+-- Tabla de Dimensión
+CREATE OR REPLACE TABLE `proyecto.dwh.dim_productos`
+(
+    producto_id STRING NOT NULL,
+    nombre STRING,
+    categoria STRING,
+    subcategoria STRING,
+    precio_base NUMERIC,
+    fecha_creacion TIMESTAMP
+)
+CLUSTER BY categoria, subcategoria;
