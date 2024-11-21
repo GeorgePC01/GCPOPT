@@ -1,0 +1,23 @@
+# Configuración de Node Pools en GKE
+apiVersion: v1
+kind: NodePool
+metadata:
+  name: mixed-pool
+spec:
+  # Pool principal para cargas estables
+  primary:
+    nodeConfig:
+      machineType: n2-standard-2
+      diskSize: 100
+    autoscaling:
+      minNodeCount: 2
+      maxNodeCount: 5
+
+  # Pool preemptible para cargas flexibles
+  preemptible:
+    nodeConfig:
+      preemptible: true
+      machineType: n2-standard-2
+    autoscaling:
+      minNodeCount: 0
+      maxNodeCount: 10
