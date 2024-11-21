@@ -1,0 +1,33 @@
+rollback_procedures:
+  gke:
+    - name: "Kubernetes Rollback"
+      command: "kubectl rollout undo deployment/{deployment_name}"
+      validation:
+        - "kubectl rollout status deployment/{deployment_name}"
+        - "kubectl get pods"
+      recovery_time: "5m"
+
+  cloud_sql:
+    - name: "Database Failover"
+      steps:
+        - "Activate standby instance"
+        - "Update connection strings"
+        - "Verify replication status"
+      recovery_time: "3m"
+      
+  bigquery:
+    - name: "Data Recovery"
+      procedure: "restore_from_snapshot"
+      parameters:
+        time_travel: "4h"
+        validation_queries:
+          - "SELECT COUNT(*) FROM target_table"
+      recovery_time: "15m"
+
+  cloud_functions:
+    - name: "Function Version Rollback"
+      command: "gcloud functions rollback {function_name}"
+      verification:
+        - "Check logs"
+        - "Test endpoints"
+      recovery_time: "2m"
