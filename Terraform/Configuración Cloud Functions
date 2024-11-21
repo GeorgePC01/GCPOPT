@@ -1,0 +1,36 @@
+# Cloud Functions
+resource "google_cloudfunctions_function" "data_processor" {
+  name        = "data-processor"
+  description = "Procesa datos desde Pub/Sub"
+  runtime     = "python39"
+
+  available_memory_mb   = 256
+  source_archive_bucket = google_storage_bucket.functions_source.name
+  source_archive_object = google_storage_bucket_object.function_zip.name
+  entry_point          = "process_data"
+
+  event_trigger {
+    event_type = "google.pubsub.topic.publish"
+    resource   = google_pubsub_topic.data_processing.name
+  }
+
+  environment_variables = {
+    PROJECT_ID     = var.project_id
+    DATASET_ID     = google_bigquery_dataset.operational.dataset_id
+    BATCH_SIZE     = "100"
+    DEBUG_MODE     = "false"
+  }
+
+  vpc_connector = google_vpc_access_connector.connector.id
+}
+
+# Cloud Scheduler Jobs
+resource "google_cloud_scheduler_job" "data_processing_trigger" {
+  name     = "trigger-data-processing"
+  schedule = "*/10 * * * *"  # Cada 10 minutos
+
+  pubsub_target {
+    topic_name = google_pubsub_topic.data_processing.id
+    data       = base64encode("{\"type\": \"scheduled_processing\"}")
+  }
+}
