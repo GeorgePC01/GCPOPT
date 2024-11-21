@@ -1,0 +1,26 @@
+monitoring:
+  dashboards:
+    - name: "Data Services Overview"
+      widgets:
+        - title: "Cloud SQL Performance"
+          metrics:
+            - "cloudsql.googleapis.com/database/network/connections"
+            - "cloudsql.googleapis.com/database/memory/utilization"
+        
+        - title: "BigQuery Performance"
+          metrics:
+            - "bigquery.googleapis.com/query/execution_times"
+            - "bigquery.googleapis.com/query/bytes_processed"
+
+  alerts:
+    database:
+      - condition: "replication_lag > 100ms"
+        notification_channels: ["email", "slack"]
+      
+    bigquery:
+      - condition: "query_execution_time > 10s"
+        notification_channels: ["email"]
+
+    dataflow:
+      - condition: "processing_lag > 300s"
+        notification_channels: ["slack"]
