@@ -1,0 +1,13 @@
+# Configuración inicial del proyecto
+gcloud projects create [PROJECT_ID]
+gcloud config set project [PROJECT_ID]
+
+# Habilitar APIs necesarias
+gcloud services enable \
+  compute.googleapis.com \
+  container.googleapis.com \
+  sqladmin.googleapis.com \
+  bigquery.googleapis.com \
+  cloudfunctions.googleapis.com \
+  cloudscheduler.googleapis.com \
+  dataflow.googleapis.com
