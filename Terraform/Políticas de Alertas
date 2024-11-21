@@ -1,0 +1,27 @@
+alerts:
+  policies:
+    cost_alerts:
+      - name: "Budget Alert 80%"
+        threshold: 0.8
+        notification_channels:
+          - email: "finance@company.com"
+          - slack: "#cost-alerts"
+      
+      - name: "Budget Alert 90%"
+        threshold: 0.9
+        notification_channels:
+          - email: "finance@company.com"
+          - slack: "#cost-alerts"
+          - sms: "+1234567890"
+
+    performance_alerts:
+      - name: "High CPU Usage"
+        condition: "CPU > 80% for 15m"
+        notification_channels:
+          - slack: "#tech-alerts"
+
+      - name: "High Error Rate"
+        condition: "Error Rate > 1% for 5m"
+        notification_channels:
+          - email: "tech@company.com"
+          - slack: "#tech-alerts"
