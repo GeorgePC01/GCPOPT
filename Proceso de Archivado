@@ -1,0 +1,28 @@
+-- Procedimiento de archivado automático
+CREATE OR REPLACE PROCEDURE `proyecto.utils.archivar_datos`()
+BEGIN
+    DECLARE fecha_corte DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);
+    
+    -- Exportar datos antiguos a Cloud Storage
+    EXPORT DATA
+    OPTIONS(
+        uri='gs://archivo-datos/transacciones/*.avro',
+        format='AVRO',
+        overwrite=true
+    ) AS
+    SELECT *
+    FROM `proyecto.dataset.transacciones`
+    WHERE fecha < fecha_corte;
+    
+    -- Eliminar datos archivados
+    DELETE FROM `proyecto.dataset.transacciones`
+    WHERE fecha < fecha_corte;
+    
+    -- Registrar metadata del archivo
+    INSERT INTO `proyecto.utils.registro_archivos`
+    (fecha_archivo, registros_archivados, fecha_datos)
+    SELECT 
+        CURRENT_TIMESTAMP(),
+        COUNT(*),
+        fecha_corte;
+END;
