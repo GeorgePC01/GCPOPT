@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Script de despliegue automatizado
+echo "Iniciando despliegue de microservicios..."
+
+# Construir imágenes
+docker build -t auth-service:v1 ./auth-service
+docker build -t user-service:v1 ./user-service
+
+# Push a Container Registry
+docker push gcr.io/project/auth-service:v1
+docker push gcr.io/project/user-service:v1
+
+# Aplicar configuraciones de Kubernetes
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/auth-deployment.yaml
+kubectl apply -f k8s/user-deployment.yaml
+
+# Verificar estado
+kubectl get pods -n production
