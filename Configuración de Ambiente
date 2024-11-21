@@ -1,0 +1,35 @@
+# environments/prod/main.tf
+module "gke" {
+  source = "../../modules/gke"
+
+  environment         = "prod"
+  region             = var.region
+  network_id         = module.network.vpc_id
+  subnet_id          = module.network.subnet_id
+  machine_type       = "n2-standard-4"
+  min_nodes          = 3
+  max_nodes          = 10
+  preemptible        = false
+  service_account    = google_service_account.gke_sa.email
+  authorized_network = var.vpn_cidr
+}
+
+module "network" {
+  source = "../../modules/network"
+
+  environment  = "prod"
+  region       = var.region
+  subnet_cidr  = "10.0.0.0/20"
+  pod_cidr     = "10.1.0.0/16"
+  service_cidr = "10.2.0.0/16"
+}
+
+module "storage" {
+  source = "../../modules/storage"
+
+  environment    = "prod"
+  region         = var.region
+  lifecycle_age  = 90
+  cors_origins   = ["https://api.company.com"]
+  viewers        = ["group:prod-users@company.com"]
+}
