@@ -1,0 +1,32 @@
+-- 1. Creación de Dataset para Archivado
+CREATE SCHEMA IF NOT EXISTS `${project_id}.archive_dataset`
+  OPTIONS(
+    location = "US",
+    default_table_expiration_days = 730  -- 2 años
+  );
+
+-- 2. Configuración de Tabla de Archivo
+CREATE OR REPLACE TABLE `${project_id}.archive_dataset.historical_data`
+PARTITION BY DATE(event_timestamp)
+CLUSTER BY user_id
+OPTIONS(
+  partition_expiration_days = 730,
+  require_partition_filter = true
+) AS 
+SELECT * FROM `${project_id}.processed_dataset.events_optimized`
+WHERE DATE(event_timestamp) < DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);
+
+-- 3. Procedimiento de Archivado Automático
+CREATE OR REPLACE PROCEDURE `${project_id}.utilities.archive_old_data`()
+BEGIN
+  DECLARE cutoff_date DATE DEFAULT DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);
+  
+  -- Mover datos antiguos al archivo
+  INSERT INTO `${project_id}.archive_dataset.historical_data`
+  SELECT * FROM `${project_id}.processed_dataset.events_optimized`
+  WHERE DATE(event_timestamp) < cutoff_date;
+  
+  -- Eliminar datos archivados de la tabla principal
+  DELETE FROM `${project_id}.processed_dataset.events_optimized`
+  WHERE DATE(event_timestamp) < cutoff_date;
+END;
