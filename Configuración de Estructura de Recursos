@@ -1,0 +1,32 @@
+# Estructura de organización y políticas
+organization:
+  name: "company.com"
+  folders:
+    - name: "Production"
+      projects:
+        - name: "app-prod-001"
+          services:
+            - "compute.googleapis.com"
+            - "container.googleapis.com"
+        - name: "data-prod-001"
+          services:
+            - "bigquery.googleapis.com"
+            - "cloudsql.googleapis.com"
+    
+    - name: "Development"
+      projects:
+        - name: "app-dev-001"
+        - name: "data-dev-001"
+    
+    - name: "Shared Services"
+      projects:
+        - name: "monitoring-001"
+        - name: "security-001"
+
+# Políticas de etiquetado
+labels:
+  required:
+    - key: "environment"
+      values: ["prod", "dev", "qa"]
+    - key: "cost-center"
+      values: ["fin-*", "it-*", "ops-*"]
