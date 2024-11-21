@@ -1,0 +1,49 @@
+# Instancia Principal
+resource "google_sql_database_instance" "primary" {
+  name             = "primary-instance"
+  database_version = "POSTGRES_13"
+  region           = var.region
+
+  settings {
+    tier              = "db-custom-4-16384" # 4 vCPUs, 16GB RAM
+    availability_type = "REGIONAL"
+    
+    backup_configuration {
+      enabled                        = true
+      start_time                     = "02:00"
+      point_in_time_recovery_enabled = true
+      retention_days                = 7
+    }
+
+    maintenance_window {
+      day          = 7
+      hour         = 3
+      update_track = "stable"
+    }
+
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = google_compute_network.vpc.id
+    }
+  }
+}
+
+# Réplicas de Lectura
+resource "google_sql_database_instance" "replicas" {
+  count            = 2
+  name             = "replica-${count.index + 1}"
+  database_version = "POSTGRES_13"
+  region           = var.region_replicas[count.index]
+
+  master_instance_name = google_sql_database_instance.primary.name
+
+  settings {
+    tier              = "db-custom-2-8192" # 2 vCPUs, 8GB RAM
+    availability_type = "ZONAL"
+    
+    ip_configuration {
+      ipv4_enabled    = false
+      private_network = google_compute_network.vpc.id
+    }
+  }
+}
