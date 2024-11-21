@@ -1,0 +1,27 @@
+critical_scenarios:
+  cluster_failure:
+    detection:
+      - metric: "kubernetes.io/container/ready"
+        threshold: "< 50% for 5m"
+    response:
+      immediate:
+        - "Activate standby cluster"
+        - "Switch DNS"
+      investigation:
+        - "Collect logs"
+        - "Review metrics"
+      resolution:
+        - "Fix root cause"
+        - "Update documentation"
+
+  database_failure:
+    detection:
+      - metric: "cloudsql.googleapis.com/database/up"
+        threshold: "down for 1m"
+    response:
+      immediate:
+        - "Execute failover procedure"
+        - "Update connection pools"
+      verification:
+        - "Check replication status"
+        - "Verify data integrity"
