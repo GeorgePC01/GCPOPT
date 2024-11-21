@@ -1,0 +1,19 @@
+#!/bin/bash
+# Script de limpieza automática de recursos
+
+# Listar y eliminar discos no asociados
+echo "Identificando discos huérfanos..."
+gcloud compute disks list \
+  --filter="NOT users:*" \
+  --format="table(name,zone,size_gb)"
+
+# Listar IPs estáticas sin uso
+echo "Identificando IPs estáticas sin uso..."
+gcloud compute addresses list \
+  --filter="status:RESERVED" \
+  --format="table(name,address,region)"
+
+# Política de retención de snapshots
+echo "Aplicando política de retención de snapshots..."
+gcloud compute snapshots list \
+  --filter="creationTimestamp < $(date -d '30 days ago')"
