@@ -1,0 +1,32 @@
+disaster_recovery:
+  tier1_services:
+    strategy: "active_active"
+    regions:
+      - "us-central1"
+      - "us-east1"
+    components:
+      - "Frontend Services"
+      - "API Gateway"
+      - "Authentication"
+
+  tier2_services:
+    strategy: "active_passive"
+    primary_region: "us-central1"
+    failover_region: "us-east1"
+    components:
+      - "Databases"
+      - "Message Queue"
+      
+  tier3_services:
+    strategy: "backup_restore"
+    backup_location: "us-multi-regional"
+    components:
+      - "Analytics"
+      - "Historical Data"
+
+  testing:
+    frequency: "quarterly"
+    scenarios:
+      - "Region failure"
+      - "Network partition"
+      - "Data corruption"
