@@ -1,0 +1,26 @@
+# Configuración de automatización ETL
+resource "google_dataflow_job" "etl_pipeline" {
+  name              = "bigquery-etl-pipeline"
+  template_gcs_path = "gs://dataflow-templates/latest/Cloud_PubSub_to_BigQuery"
+  temp_gcs_location = "${google_storage_bucket.temp_bucket.url}/temp"
+  
+  parameters = {
+    inputTopic = "projects/${var.project_id}/topics/raw-data"
+    outputTableSpec = "${var.project_id}:processed_dataset.processed_table"
+    transformationJavaScript = "gs://${google_storage_bucket.config_bucket.name}/transforms/process.js"
+  }
+
+  machine_type = "n1-standard-2"
+  max_workers = 10
+}
+
+# Scheduler para automatización
+resource "google_cloud_scheduler_job" "etl_trigger" {
+  name     = "trigger-etl-pipeline"
+  schedule = "0 */4 * * *"
+  
+  pubsub_target {
+    topic_name = google_pubsub_topic.etl_trigger.id
+    data       = base64encode("START_ETL")
+  }
+}
