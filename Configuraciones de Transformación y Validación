@@ -1,0 +1,51 @@
+// config/validation_rules.json
+{
+  "rules": [
+    {
+      "field": "user_id",
+      "type": "string",
+      "required": true,
+      "pattern": "^[A-Z0-9]{8,}$"
+    },
+    {
+      "field": "timestamp",
+      "type": "timestamp",
+      "required": true,
+      "range": {
+        "min": "2020-01-01T00:00:00Z"
+      }
+    },
+    {
+      "field": "value",
+      "type": "number",
+      "required": true,
+      "range": {
+        "min": 0,
+        "max": 1000000
+      }
+    }
+  ],
+  "thresholds": {
+    "errorRate": 0.01,
+    "nullRate": 0.05
+  }
+}
+
+// sql/transform.sql
+WITH validated_data AS (
+  SELECT 
+    user_id,
+    TIMESTAMP(timestamp) as event_time,
+    CAST(value AS FLOAT64) as metric_value,
+    metadata
+  FROM staging_dataset.preprocessed_data
+  WHERE user_id IS NOT NULL
+    AND timestamp IS NOT NULL
+)
+SELECT 
+  *,
+  LAG(metric_value) OVER (PARTITION BY user_id ORDER BY event_time) as previous_value,
+  TIMESTAMP_DIFF(event_time, 
+    LAG(event_time) OVER (PARTITION BY user_id ORDER BY event_time),
+    SECOND) as time_diff
+FROM validated_data
