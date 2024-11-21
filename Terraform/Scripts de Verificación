@@ -1,0 +1,10 @@
+# Verificar Cloud Functions
+gcloud functions describe data-processor
+gcloud functions logs read data-processor --limit=50
+
+# Verificar Cloud Run
+gcloud run services describe data-processor
+gcloud run services list
+
+# Probar Pub/Sub
+gcloud pubsub topics publish data-processing --message="test"
