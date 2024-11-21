@@ -1,0 +1,15 @@
+-- Procedimiento de archivado
+CREATE PROCEDURE ArchivarDatosHistoricos()
+BEGIN
+    -- Mover datos antiguos a tablas de archivo
+    INSERT INTO ordenes_archivo
+    SELECT * FROM ordenes
+    WHERE fecha_orden < DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR);
+    
+    -- Eliminar datos archivados
+    DELETE FROM ordenes
+    WHERE fecha_orden < DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR);
+    
+    -- Optimizar tabla
+    OPTIMIZE TABLE ordenes;
+END;
