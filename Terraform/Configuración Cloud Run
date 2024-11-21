@@ -1,0 +1,49 @@
+# Cloud Run Service
+resource "google_cloud_run_service" "processor" {
+  name     = "data-processor"
+  location = var.region
+
+  template {
+    spec {
+      containers {
+        image = "gcr.io/${var.project_id}/data-processor:latest"
+        
+        resources {
+          limits = {
+            cpu    = "1000m"
+            memory = "512Mi"
+          }
+        }
+
+        env {
+          name  = "PROJECT_ID"
+          value = var.project_id
+        }
+        env {
+          name  = "QUEUE_NAME"
+          value = google_pubsub_topic.data_processing.name
+        }
+      }
+
+      service_account_name = google_service_account.cloud_run_sa.email
+      timeout_seconds     = 300
+    }
+  }
+
+  autogenerate_revision_name = true
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+}
+
+# IAM para Cloud Run
+resource "google_cloud_run_service_iam_binding" "public" {
+  location = google_cloud_run_service.processor.location
+  service  = google_cloud_run_service.processor.name
+  role     = "roles/run.invoker"
+  members  = [
+    "serviceAccount:${google_service_account.cloud_run_sa.email}"
+  ]
+}
