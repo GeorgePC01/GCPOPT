@@ -1,0 +1,24 @@
+# Dashboard Configuration
+monitoring:
+  dashboards:
+    - name: "Infrastructure Overview"
+      widgets:
+        - title: "GKE Cluster Status"
+          metrics:
+            - "kubernetes.io/container/cpu/utilization"
+            - "kubernetes.io/container/memory/utilization"
+          
+        - title: "Database Performance"
+          metrics:
+            - "cloudsql.googleapis.com/database/cpu/utilization"
+            - "cloudsql.googleapis.com/database/memory/utilization"
+            
+        - title: "Serverless Status"
+          metrics:
+            - "cloudfunctions.googleapis.com/function/execution_count"
+            - "run.googleapis.com/request_count"
+
+        - title: "Cost Overview"
+          metrics:
+            - "billing/monthly_cost"
+            - "billing/credits_used"
