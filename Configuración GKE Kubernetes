@@ -1,0 +1,86 @@
+# Deployment para microservicio de autenticación
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: production
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: gcr.io/project/auth-service:v1
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+# Configuración del Cluster GKE
+apiVersion: container.gke.io/v1
+kind: Cluster
+metadata:
+  name: prod-cluster
+spec:
+  locations:
+    - us-central1-a
+    - us-central1-b
+  nodeConfig:
+    machineType: n2-standard-4
+    diskSizeGb: 100
+    minCpuPlatform: "Intel Cascade Lake"
+  
+  nodePools:
+    - name: general-pool
+      initialNodeCount: 3
+      autoscaling:
+        minNodeCount: 3
+        maxNodeCount: 10
+      management:
+        autoRepair: true
+        autoUpgrade: true
+    
+    - name: preemptible-pool
+      initialNodeCount: 0
+      autoscaling:
+        minNodeCount: 0
+        maxNodeCount: 5
+      config:
+        preemptible: true
+
+# Configuración de HPA (Horizontal Pod Autoscaling)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app-deployment
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
