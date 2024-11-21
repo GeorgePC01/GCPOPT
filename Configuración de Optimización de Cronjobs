@@ -1,0 +1,17 @@
+# Configuración Cloud Scheduler + Cloud Functions
+cloud_scheduler_jobs:
+  - name: "proceso-datos-diario"
+    schedule: "0 0 * * *"
+    target:
+      type: "cloud_function"
+      function: "procesarDatos"
+      memory: "256MB"
+      timeout: "540s"
+
+  - name: "reportes-semanales"
+    schedule: "0 0 * * 1"
+    target:
+      type: "cloud_function"
+      function: "generarReportes"
+      memory: "512MB"
+      timeout: "600s"
