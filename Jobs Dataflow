@@ -1,0 +1,33 @@
+# Pre-procesamiento
+resource "google_dataflow_job" "preprocessing" {
+  name              = "data-preprocessing"
+  template_gcs_path = "gs://dataflow-templates/latest/Stream_GCS_Text_to_BigQuery"
+  
+  parameters = {
+    javascriptTextTransformGcsPath = "${google_storage_bucket.config_bucket.url}/transforms/preprocess.js"
+    javascriptTextTransformFunctionName = "transform"
+    outputDeadletterTable = "${var.project_id}:error_dataset.preprocessing_errors"
+  }
+}
+
+# Transformación
+resource "google_dataflow_job" "transformation" {
+  name              = "data-transformation"
+  template_gcs_path = "gs://dataflow-templates/latest/Word_Count"
+  
+  parameters = {
+    inputTableSpec  = "${var.project_id}:raw_dataset.input_table"
+    outputTableSpec = "${var.project_id}:processed_dataset.output_table"
+  }
+}
+
+# Validación
+resource "google_dataflow_job" "validation" {
+  name              = "data-validation"
+  template_gcs_path = "gs://dataflow-templates/latest/DataStreamIO"
+  
+  parameters = {
+    inputFilePattern = "gs://${google_storage_bucket.data_bucket.name}/validation/*.json"
+    outputTableSpec  = "${var.project_id}:quality_dataset.validation_results"
+  }
+}
