@@ -1,0 +1,12 @@
+# Configurar acceso al cluster
+gcloud container clusters get-credentials prod-cluster --region=us-central1
+
+# Verificar nodos
+kubectl get nodes -o wide
+
+# Verificar componentes del sistema
+kubectl get pods -n kube-system
+
+# Verificar networking
+kubectl run test-pod --image=busybox -- sleep 3600
+kubectl exec test-pod -- nslookup kubernetes.default
