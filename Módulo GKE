@@ -1,0 +1,51 @@
+# modules/gke/main.tf
+resource "google_container_cluster" "primary" {
+  name     = "${var.environment}-cluster"
+  location = var.region
+  
+  # Remove default node pool
+  remove_default_node_pool = true
+  initial_node_count       = 1
+
+  # Networking
+  network    = var.network_id
+  subnetwork = var.subnet_id
+
+  # Private cluster config
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false
+    master_ipv4_cidr_block = "172.16.0.0/28"
+  }
+
+  # Master authorized networks
+  master_authorized_networks_config {
+    cidr_blocks {
+      cidr_block   = var.authorized_network
+      display_name = "VPN"
+    }
+  }
+}
+
+resource "google_container_node_pool" "primary_nodes" {
+  name       = "${var.environment}-node-pool"
+  cluster    = google_container_cluster.primary.name
+  location   = var.region
+  node_count = var.initial_node_count
+
+  autoscaling {
+    min_node_count = var.min_nodes
+    max_node_count = var.max_nodes
+  }
+
+  node_config {
+    preemptible  = var.preemptible
+    machine_type = var.machine_type
+
+    service_account = var.service_account
+
+    oauth_scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+}
