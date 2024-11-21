@@ -1,0 +1,35 @@
+-- 1. Query Template para Análisis de Usuario
+WITH user_metrics AS (
+  SELECT
+    user_id,
+    DATE_TRUNC(event_timestamp, MONTH) as month,
+    COUNT(*) as total_events,
+    COUNT(DISTINCT DATE(event_timestamp)) as active_days,
+    SUM(value) as total_value
+  FROM `${project_id}.processed_dataset.events_optimized`
+  WHERE DATE(event_timestamp) BETWEEN @start_date AND @end_date
+    AND user_id IN UNNEST(@user_ids)
+  GROUP BY 1, 2
+)
+SELECT
+  user_id,
+  month,
+  total_events,
+  active_days,
+  total_value,
+  total_value / NULLIF(active_days, 0) as daily_average
+FROM user_metrics
+ORDER BY month DESC, total_value DESC;
+
+-- 2. Optimización de Joins
+SELECT
+  e.user_id,
+  u.user_type,
+  COUNT(*) as event_count,
+  AVG(e.duration) as avg_duration
+FROM `${project_id}.processed_dataset.events_optimized` e
+JOIN `${project_id}.user_dataset.user_metadata` u
+  ON e.user_id = u.user_id
+  AND DATE(e.event_timestamp) = u.active_date
+WHERE DATE(e.event_timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+GROUP BY 1, 2;
