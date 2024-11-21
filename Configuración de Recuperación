@@ -1,0 +1,38 @@
+# 1. Políticas de Backup y Recuperación
+resource "google_bigquery_dataset" "backup_dataset" {
+  dataset_id  = "backup_dataset"
+  description = "Dataset for backup and disaster recovery"
+  location    = "US"
+
+  default_table_expiration_ms = 7776000000  # 90 días
+  labels = {
+    environment = "production"
+    type        = "backup"
+  }
+}
+
+# 2. Job de Backup Automático
+resource "google_cloud_scheduler_job" "backup_job" {
+  name     = "bq-backup-job"
+  schedule = "0 0 * * *"
+
+  bigquery_target {
+    project_id = var.project_id
+    location   = "US"
+    query      = file("${path.module}/sql/backup.sql")
+  }
+}
+
+# 3. Políticas de Retención
+resource "google_bigquery_table" "backup_table" {
+  for_each = local.critical_tables
+
+  dataset_id = google_bigquery_dataset.backup_dataset.dataset_id
+  table_id   = "backup_${each.key}"
+  
+  time_partitioning {
+    type                     = "DAY"
+    expiration_ms           = 7776000000  # 90 días
+    require_partition_filter = true
+  }
+}
