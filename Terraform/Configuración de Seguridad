@@ -1,0 +1,33 @@
+# Service Accounts
+resource "google_service_account" "gke_sa" {
+  account_id   = "gke-service-account"
+  display_name = "GKE Service Account"
+}
+
+resource "google_project_iam_binding" "gke_binding" {
+  project = var.project_id
+  role    = "roles/container.nodeServiceAccount"
+  members = [
+    "serviceAccount:${google_service_account.gke_sa.email}"
+  ]
+}
+
+# Reglas de Firewall
+resource "google_compute_firewall" "allow_internal" {
+  name    = "allow-internal"
+  network = google_compute_network.vpc.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
+  allow {
+    protocol = "udp"
+    ports    = ["0-65535"]
+  }
+  allow {
+    protocol = "icmp"
+  }
+
+  source_ranges = ["10.0.0.0/20", "10.1.0.0/16", "10.2.0.0/16"]
+}
