@@ -1,0 +1,24 @@
+# Cloud Scheduler + Cloud Functions setup
+schedulers:
+  - name: "daily-processing"
+    schedule: "0 0 * * *"
+    target:
+      type: "cloud_function"
+      function_name: "processDaily"
+      region: "us-central1"
+  
+  - name: "hourly-metrics"
+    schedule: "0 * * * *"
+    target:
+      type: "cloud_run"
+      service: "metrics-processor"
+      region: "us-central1"
+
+functions:
+  - name: "processDaily"
+    runtime: "nodejs16"
+    memory: "256MB"
+    timeout: "540s"
+    environment_variables:
+      PROJECT_ID: "app-prod-001"
+      DATASET_ID: "processing_data"
